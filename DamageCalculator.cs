@@ -1,12 +1,14 @@
-﻿using PokemonBattle.Type;
+﻿using System;
+using PokemonBattle.Type;
 
-namespace PokemonBattle;
-
-public static class DamageCalculator
+namespace PokemonBattle
 {
-    public static int ComputeDamage(int baseDamage, PokemonType attacker, PokemonType defender)
+    public static class DamageCalculator
     {
-        double mult = TypeChart.GetMultiplier(attacker, defender);
-        return Math.Max(1, (int)Math.Round(baseDamage * mult));
+        public static int ComputeDamage(int baseDamage, PokemonType attacker, PokemonType defender)
+        {
+            double mult = TypeChart.GetMultiplier(attacker, defender);
+            return Math.Max(1, (int)Math.Round(baseDamage * mult));
+        }
     }
 }

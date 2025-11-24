@@ -1,39 +1,57 @@
 ﻿using System;
+using System.Linq;
 
-public class BattleLoop
+namespace PokemonBattle
 {
-    private readonly Pokemon p1;
-    private readonly Pokemon p2;
-    private readonly int baseDamageP1;
-    private readonly int baseDamageP2;
-
-    public BattleLoop(Pokemon first, Pokemon second, int baseDamageFirst, int baseDamageSecond)
+    public class BattleLoop
     {
-        p1 = first;
-        p2 = second;
-        baseDamageP1 = Math.Max(1, baseDamageFirst);
-        baseDamageP2 = Math.Max(1, baseDamageSecond);
-    }
+        private readonly Pokemon p1;
+        private readonly Pokemon p2;
 
-    public void Run()
-    {
-        int turn = 1;
-        Console.WriteLine("====Debut du combat====");
+        private readonly Random _rng = new();
 
-        while (!p1.IsKO && !p2.IsKO)
+        public BattleLoop(Pokemon first, Pokemon second)
         {
-            Console.WriteLine($"\n— Tour {turn} —");
-
-            if (!p1.IsKO && !p2.IsKO)
-                p1.Attack(p2, baseDamageP1);
-
-            if (!p1.IsKO && !p2.IsKO)
-                p2.Attack(p1, baseDamageP2);
-
-            turn++;
+            p1 = first;
+            p2 = second;
         }
 
-        var winner = p1.IsKO ? p2 : p1;
-        Console.WriteLine($"\n=== Vainqueur : {winner.Name} ({winner.Type}) ===");
+        public void Run()
+        {
+            int turn = 1;
+            Console.WriteLine("\n==== Début du combat ====\n");
+
+            while (!p1.IsKO && !p2.IsKO)
+            {
+                Console.WriteLine($"- Tour {turn} -");
+
+                if (!p1.IsKO && !p2.IsKO)
+                    DoTurn(p1, p2);
+
+                if (!p1.IsKO && !p2.IsKO)
+                    DoTurn(p2, p1);
+
+                Console.WriteLine();
+                turn++;
+            }
+
+            var winner = p1.IsKO ? p2 : p1;
+            Console.WriteLine($"=== Vainqueur : {winner.Name} ===");
+        }
+
+        private void DoTurn(Pokemon attacker, Pokemon defender)
+        {
+            if (attacker.Attacks.Count > 0)
+            {
+                // Choisir une attaque au hasard parmi celles du CSV
+                var move = attacker.Attacks[_rng.Next(attacker.Attacks.Count)];
+                attacker.Attack(defender, move);
+            }
+            else
+            {
+                // Fallback : pas d’attaque connue → dégâts bruts
+                attacker.Attack(defender, 10);
+            }
+        }
     }
 }
