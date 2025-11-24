@@ -44,30 +44,31 @@ public class Program
         var squirtle = new Pokemon(squirtleData, hitPoints: 160);
 
         // 5) Afficher leurs attaques
-        BattleAnnouncer.Say($"{pikachu.Name} connaît : {string.Join(", ", pikachu.Attacks.Select(a => a.Name))}", ConsoleColor.Yellow);
-        BattleAnnouncer.Say($"{squirtle.Name} connaît : {string.Join(", ", squirtle.Attacks.Select(a => a.Name))}", ConsoleColor.Cyan);
+        BattleAnnouncer.Say(
+            $"{pikachu.Name} connaît : {string.Join(", ", pikachu.Attacks.Select(a => a.Name))}",
+            ConsoleColor.Yellow
+        );
+        BattleAnnouncer.Say(
+            $"{squirtle.Name} connaît : {string.Join(", ", squirtle.Attacks.Select(a => a.Name))}",
+            ConsoleColor.Cyan
+        );
         Console.WriteLine();
 
-        // 6) Utiliser leurs premières attaques pour définir les dégâts de base du BattleLoop
-        int baseDamagePikachu = pikachu.Attacks.Count > 0 ? pikachu.Attacks[0].Power : 10;
-        int baseDamageSquirtle = squirtle.Attacks.Count > 0 ? squirtle.Attacks[0].Power : 10;
+        // 6) Lancer la boucle de combat
         BattleAnnouncer.Say($"Combat: {pikachu.Name} vs {squirtle.Name}", ConsoleColor.Magenta);
-
-        BattleAnnouncer.Say($"Dégâts de base: {pikachu.Name} = {baseDamagePikachu}, {squirtle.Name} = {baseDamageSquirtle}", ConsoleColor.Magenta);
-
-        
         Console.WriteLine();
 
         var loop = new BattleLoop(pikachu, squirtle);
-        loop.Run();        
+        loop.Run();
 
         Console.WriteLine();
         BattleAnnouncer.Say("Petit bonus: attaques nommées depuis le CSV :", ConsoleColor.Green);
 
+        // Bonus : on force chaque Pokémon à utiliser sa première attaque si possible
         if (pikachu.Attacks.Count > 0 && !pikachu.IsKO && !squirtle.IsKO)
         {
             var move = pikachu.Attacks[0];
-            pikachu.Attack(squirtle, move);
+            pikachu.Attack(squirtle, move);   // polymorphisme: move.Use(pikachu, squirtle)
         }
 
         if (squirtle.Attacks.Count > 0 && !squirtle.IsKO && !pikachu.IsKO)

@@ -2,21 +2,23 @@
 
 namespace PokemonBattle
 {
-    public class Attack
+    public abstract class Attack
     {
         public int Id { get; }
         public string Name { get; }
-        public int Power { get; }
         public PokemonType Type { get; }
 
-        public Attack(int id, string name, int power, PokemonType type)
+        protected Attack(int id, string name, PokemonType type)
         {
             Id = id;
             Name = name;
-            Power = power;
             Type = type;
         }
 
-        public override string ToString() => $"{Name} (Pwr {Power}, {Type})";
+
+        public abstract void Use(Pokemon user, Pokemon target);
+
+ 
+        public abstract void GetDescription();
     }
 }

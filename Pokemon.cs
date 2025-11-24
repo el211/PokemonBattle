@@ -11,6 +11,9 @@ namespace PokemonBattle
 
         public string Name { get; }
         public PokemonType Type { get; }
+
+        // PV maximum et PV actuels
+        public int MaxHitPoints { get; }
         public int HitPoints { get; private set; }
 
         public bool IsKO => HitPoints <= 0;
@@ -26,6 +29,8 @@ namespace PokemonBattle
 
             Name = name;
             Type = type;
+
+            MaxHitPoints = hitPoints;
             HitPoints = hitPoints;
         }
 
@@ -40,6 +45,8 @@ namespace PokemonBattle
 
             Name = data.Name;
             Type = data.Type;
+
+            MaxHitPoints = hitPoints;
             HitPoints = hitPoints;
 
             foreach (var id in data.AttackIds)
@@ -56,7 +63,7 @@ namespace PokemonBattle
         }
 
         // --- Ancienne version avec baseDamage brut ---
-        // Peut encore servir de fallback, mais garde la logique "super efficace"
+        // Peut encore servir de fallback
         public void Attack(Pokemon target, int baseDamage)
         {
             if (!CanAttack(target)) return;
@@ -74,7 +81,7 @@ namespace PokemonBattle
             target.ReceiveDamage(finalDamage);
         }
 
-        // --- Nouvelle attaque en utilisant un move du CSV ---
+        // --- Nouvelle attaque en utilisant un move du CSV / polymorphe ---
         public void Attack(Pokemon target, Attack move)
         {
             if (move == null)
@@ -85,18 +92,8 @@ namespace PokemonBattle
 
             if (!CanAttack(target)) return;
 
-            // ICI : on utilise le TYPE DE L’ATTAQUE, pas le type du Pokémon
-            double mult = TypeChart.GetMultiplier(move.Type, target.Type);
-            int finalDamage = Math.Max(1, (int)Math.Round(move.Power * mult));
-
-            if (mult > 1.0)
-                Console.WriteLine($"{Name} utilise {move.Name} sur {target.Name} (super efficace) et inflige {finalDamage} dégâts !");
-            else if (mult < 1.0)
-                Console.WriteLine($"{Name} utilise {move.Name} sur {target.Name} (pas très efficace) et inflige {finalDamage} dégâts !");
-            else
-                Console.WriteLine($"{Name} utilise {move.Name} sur {target.Name} et inflige {finalDamage} dégâts !");
-
-            target.ReceiveDamage(finalDamage);
+            // On délègue à l'attaque concrète (DamageAttack, HealingAttack, VampireAttack, etc.)
+            move.Use(this, target);
         }
 
         private bool CanAttack(Pokemon target)
@@ -119,12 +116,29 @@ namespace PokemonBattle
             if (damage <= 0) return;
 
             HitPoints = Math.Max(0, HitPoints - damage);
-            Console.WriteLine($"{Name} possède encore {HitPoints} HP !");
+            Console.WriteLine($"{Name} possède encore {HitPoints}/{MaxHitPoints} HP !");
 
             if (HitPoints == 0)
                 Console.WriteLine($"{Name} est K.O. !");
         }
 
-        public override string ToString() => $"{Name} ({Type}) — {HitPoints} HP";
+        public void Heal(int amount)
+        {
+            if (amount <= 0) return;
+
+            if (IsKO)
+            {
+                Console.WriteLine($"{Name} est K.O. et ne peut pas etre soigne.");
+                return;
+            }
+
+            int oldHp = HitPoints;
+            HitPoints = Math.Min(MaxHitPoints, HitPoints + amount);
+
+            int healed = HitPoints - oldHp;
+            Console.WriteLine($"{Name} recupere {healed} PV ({HitPoints}/{MaxHitPoints}) !");
+        }
+
+        public override string ToString() => $"{Name} ({Type}) — {HitPoints}/{MaxHitPoints} HP";
     }
 }

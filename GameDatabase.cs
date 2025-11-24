@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using PokemonBattle.Type;
@@ -95,16 +96,59 @@ namespace PokemonBattle
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 var parts = line.Split(',');
-                if (parts.Length < 4) continue;
+                if (parts.Length < 5)
+                {
+                    Console.WriteLine($"[WARN] Ligne invalide dans attacks.csv : '{line}'");
+                    continue;
+                }
 
+                // id,name,kind,power,type,vamp_coeff
                 int id = int.Parse(parts[0].Trim());
                 string name = parts[1].Trim();
-                int power = int.Parse(parts[2].Trim());
-                string typeStr = parts[3].Trim();
+                string kind = parts[2].Trim().ToLowerInvariant(); // damage / heal / vampire
+                int power = int.Parse(parts[3].Trim());
+                string typeStr = parts[4].Trim();
+                string vampCoeffStr = parts.Length > 5 ? parts[5].Trim() : "";
 
                 var type = ParseType(typeStr);
 
-                var atk = new Attack(id, name, power, type);
+                Attack atk;
+
+                switch (kind)
+                {
+                    case "damage":
+                        // Attaque de dégâts classique
+                        atk = new DamageAttack(id, name, power, type);
+                        break;
+
+                    case "heal":
+                        // Attaque de soin : power = quantité de soin
+                        atk = new HealingAttack(id, name, power, type);
+                        break;
+
+                    case "vampire":
+                        // Attaque vampire : power = dégâts de base, vamp_coeff = % de vol de vie
+                        double coeff = 0.5;
+                        if (!string.IsNullOrEmpty(vampCoeffStr))
+                        {
+                            double.TryParse(
+                                vampCoeffStr,
+                                NumberStyles.Float,
+                                CultureInfo.InvariantCulture,
+                                out coeff
+                            );
+                        }
+
+                        atk = new VampireAttack(id, name, power, coeff, type);
+                        break;
+
+                    default:
+                        // Sécurité si jamais le kind est inconnu on traite comme damage
+                        Console.WriteLine($"[WARN] kind '{kind}' inconnu pour l'attaque {name}, traité comme 'damage'.");
+                        atk = new DamageAttack(id, name, power, type);
+                        break;
+                }
+
                 AttacksById[id] = atk;
             }
         }
