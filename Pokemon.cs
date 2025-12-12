@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using PokemonBattle.Type;
+using System.Linq;
+using PokemonBattle.Type;   // ✅ we *use* PokemonType from this namespace
 
 namespace PokemonBattle
 {
@@ -67,6 +68,9 @@ namespace PokemonBattle
         public void Attack(Pokemon target, int baseDamage)
         {
             if (!CanAttack(target)) return;
+            
+            // 🔴 Intégration du son pour l'attaque (même pour le fallback)
+            AudioService.PlayPokemonSound(this.Name); 
 
             double mult = TypeChart.GetMultiplier(this.Type, target.Type);
             int finalDamage = Math.Max(1, (int)Math.Round(baseDamage * mult));
@@ -91,6 +95,9 @@ namespace PokemonBattle
             }
 
             if (!CanAttack(target)) return;
+
+            //  NOUVEAU: Jouer le son du Pokémon attaquant
+            AudioService.PlayPokemonSound(this.Name); 
 
             // On délègue à l'attaque concrète (DamageAttack, HealingAttack, VampireAttack, etc.)
             move.Use(this, target);
@@ -138,6 +145,15 @@ namespace PokemonBattle
             int healed = HitPoints - oldHp;
             Console.WriteLine($"{Name} recupere {healed} PV ({HitPoints}/{MaxHitPoints}) !");
         }
+
+        // 🟢 NOUVEAU: Méthode Catch pour la Poké Ball
+        public void Catch()
+        {
+            // On considère le Pokémon comme K.O. pour mettre fin au BattleLoop.
+            HitPoints = 0;
+            Console.WriteLine($"\n***** {Name} a été capturé ! Le combat prend fin. *****\n");
+        }
+
 
         public override string ToString() => $"{Name} ({Type}) — {HitPoints}/{MaxHitPoints} HP";
     }

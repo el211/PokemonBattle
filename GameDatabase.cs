@@ -20,16 +20,14 @@ namespace PokemonBattle
         {
             if (_isLoaded) return;
 
-            // Dossier de l'exe : ...\PokemonBattle\bin\Debug\net10.0\
             string baseDir = AppContext.BaseDirectory;
 
-            // On remonte de 3 niveaux pour revenir au projet :
             // net10.0 -> Debug -> bin -> PokemonBattle
             string projectDir = Path.GetFullPath(
                 Path.Combine(baseDir, "..", "..", "..")
             );
 
-            // Dossier "data" à la racine du projet (là où tu as mis les CSV)
+            // Dossier data à la racine du projet (là où tu as mis les CSV)
             string dataDir = Path.Combine(projectDir, "data");
 
             string attacksPath = Path.Combine(dataDir, "attacks.csv");
@@ -39,45 +37,63 @@ namespace PokemonBattle
             LoadPokemon(pokemonPath);
             _isLoaded = true;
         }
+        
+    //mapping    
 
-        // ---------- mapping string CSV -> ton enum PokemonType ----------
+private static PokemonType ParseType(string typeStr)
+{
+    if (string.IsNullOrWhiteSpace(typeStr))
+        return PokemonType.Normal;
 
-        private static PokemonType ParseType(string typeStr)
-        {
-            if (string.IsNullOrWhiteSpace(typeStr))
-                return PokemonType.Normal;
+    switch (typeStr.Trim().ToLowerInvariant())
+    {
+        case "normal":   return PokemonType.Normal;
+        
+        // CSV anglais -> enum FR 
+        case "fire":     return PokemonType.Feu;
+        case "water":    return PokemonType.Eau;
+        case "grass":    return PokemonType.Plante;
+        case "electric": return PokemonType.Electrik;
 
-            switch (typeStr.Trim().ToLowerInvariant())
-            {
-                case "normal":   return PokemonType.Normal;
+        // Gestion des noms de types en français 
+        case "plante":   return PokemonType.Plante; 
+        case "feu":      return PokemonType.Feu; 
+        case "eau":      return PokemonType.Eau; 
+        case "electrik": return PokemonType.Electrik;
+        case "insecte":  return PokemonType.Insecte;
+        case "sol":      return PokemonType.Sol;
+        case "fee":      return PokemonType.Fee;
+        case "poison":   return PokemonType.Poison;
+        case "roche":    return PokemonType.Roche;
+        case "spectre":  return PokemonType.Spectre;
+        case "tenebres": return PokemonType.Tenebres;
+        case "combat":   return PokemonType.Combat;
+        case "psy":      return PokemonType.Psy;
+        case "vol":      return PokemonType.Vol;
 
-                // CSV anglais -> enum FR
-                case "fire":     return PokemonType.Feu;
-                case "water":    return PokemonType.Eau;
-                case "grass":    return PokemonType.Plante;
-                case "electric": return PokemonType.Electrik;
 
-                // Autres types pas encore dans l'enum -> Normal par défaut
-                case "fairy":
-                case "psychic":
-                case "dark":
-                case "ghost":
-                case "ice":
-                case "rock":
-                case "ground":
-                case "steel":
-                case "dragon":
-                case "flying":
-                case "fighting":
-                case "poison":
-                case "bug":
-                    return PokemonType.Normal;
-
-                default:
-                    Console.WriteLine($"[WARN] Type inconnu dans CSV: '{typeStr}', remplacé par Normal.");
-                    return PokemonType.Normal;
-            }
-        }
+        // Autres types pas encore dans l'enum c'est  Normal par défaut 
+        // je les garde pour etr eplus robuste apres
+        case "psychic":
+        case "dark":
+        case "ghost":
+        case "ice":
+        case "rock":
+        case "ground":
+        case "steel":
+        case "dragon":
+        case "flying":
+        case "fighting":
+        case "bug":
+        case "glace":    
+        case "acier":    
+            return PokemonType.Normal; 
+        
+        default:
+            Console.WriteLine($"[WARN] Type inconnu dans CSV: '{typeStr}', remplacé par Normal.");
+            return PokemonType.Normal;
+    }
+}
 
         // ----------------- attacks.csv -----------------
 
@@ -90,12 +106,13 @@ namespace PokemonBattle
 
             var lines = File.ReadAllLines(path);
 
-            // première ligne = header, on la saute
             foreach (var line in lines.Skip(1))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 var parts = line.Split(',');
+                
+                // Le nombre de parties dépend du fait que vamp_coeff soit présent ou non (5 ou 6)
                 if (parts.Length < 5)
                 {
                     Console.WriteLine($"[WARN] Ligne invalide dans attacks.csv : '{line}'");
@@ -108,7 +125,8 @@ namespace PokemonBattle
                 string kind = parts[2].Trim().ToLowerInvariant(); // damage / heal / vampire
                 int power = int.Parse(parts[3].Trim());
                 string typeStr = parts[4].Trim();
-                string vampCoeffStr = parts.Length > 5 ? parts[5].Trim() : "";
+                // Assure que vampCoeffStr est vide si la partie n'existe pas
+                string vampCoeffStr = parts.Length > 5 ? parts[5].Trim() : ""; 
 
                 var type = ParseType(typeStr);
 
@@ -117,12 +135,10 @@ namespace PokemonBattle
                 switch (kind)
                 {
                     case "damage":
-                        // Attaque de dégâts classique
                         atk = new DamageAttack(id, name, power, type);
                         break;
 
                     case "heal":
-                        // Attaque de soin : power = quantité de soin
                         atk = new HealingAttack(id, name, power, type);
                         break;
 
@@ -168,14 +184,23 @@ namespace PokemonBattle
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
-                // id,name,type,attack_ids
+                // Apres la maj de aujourdhui le format attendu est maintenant: id,name,type,attack_ids,cost
                 var parts = line.Split(',');
-                if (parts.Length < 4) continue;
+                
+                // Mise à jour: il faut au moins 5 parties
+                if (parts.Length < 5) 
+                {
+                    Console.WriteLine($"[WARN] Ligne invalide (manque le coût) dans pokemon.csv : '{line}'");
+                    continue;
+                }
 
                 int id = int.Parse(parts[0].Trim());
                 string name = parts[1].Trim();
                 string typeStr = parts[2].Trim();
                 string attackIdsStr = parts[3].Trim();
+                
+                // Lecture du cout d'achat
+                int cost = int.Parse(parts[4].Trim());
 
                 var type = ParseType(typeStr);
 
@@ -184,7 +209,7 @@ namespace PokemonBattle
                     .Select(s => int.Parse(s.Trim()))
                     .ToList();
 
-                var data = new PokemonData(id, name, type, attackIds);
+                var data = new PokemonData(id, name, type, attackIds, cost); 
                 PokemonById[id] = data;
                 PokemonByName[name] = data;
             }

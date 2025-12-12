@@ -9,16 +9,23 @@ namespace PokemonBattle
         public string Name { get; }
         public PokemonType Type { get; }
         public List<int> AttackIds { get; }
+        
+        // 🔴 NOUVEAU: Propriété pour stocker le coût d'achat de base
+        public int BaseCost { get; } 
 
-        public PokemonData(int id, string name, PokemonType type, List<int> attackIds)
+        // 🔴 CONSTRUCTEUR MODIFIÉ: Accepte un paramètre supplémentaire pour BaseCost
+        public PokemonData(int id, string name, PokemonType type, List<int> attackIds, int baseCost)
         {
             Id = id;
             Name = name;
             Type = type;
             AttackIds = attackIds;
+            
+            // 🔴 Initialisation du coût
+            BaseCost = baseCost; 
         }
 
         public override string ToString() =>
-            $"{Id}: {Name} ({Type}) — Attaques: {string.Join("|", AttackIds)}";
+            $"{Id}: {Name} ({Type}) — Coût: {BaseCost}¥ — Attaques: {string.Join("|", AttackIds)}";
     }
 }
